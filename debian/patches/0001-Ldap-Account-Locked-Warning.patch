@@ -1,0 +1,23 @@
+From: =?utf-8?q?=C4=B0zzet_Ayd=C4=B1n?= <izzet.aydin@pardus.org.tr>
+Date: Fri, 15 Feb 2019 13:45:16 +0300
+Subject: Ldap Account Locked Warning
+
+---
+ src/providers/ldap/sdap_async_connection.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/src/providers/ldap/sdap_async_connection.c b/src/providers/ldap/sdap_async_connection.c
+index a8d4262..08851b1 100644
+--- a/src/providers/ldap/sdap_async_connection.c
++++ b/src/providers/ldap/sdap_async_connection.c
+@@ -789,6 +789,10 @@ static void simple_bind_done(struct sdap_op *op,
+                       "Password Policy Response: expire [%d] grace [%d] "
+                           "error [%s].\n", pp_expire, pp_grace,
+                           ldap_passwordpolicy_err2txt(pp_error));
++		if(strstr(ldap_passwordpolicy_err2txt(pp_error),"Account locked"))
++		{
++ 			ret = ERR_ACCOUNT_LOCKED;
++		}
+                 if (!state->ppolicy)
+                     state->ppolicy = talloc_zero(state,
+                                                  struct sdap_ppolicy_data);

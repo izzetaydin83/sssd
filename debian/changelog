@@ -1,3 +1,12 @@
+sssd (1.15.0-3pardus1) unstable; urgency=medium
+
+  [ İzzet Aydın ]
+  * Ldap Account Locked Warning
+
+  [ root ]
+
+ -- root <root@localhost.localdomain>  Fri, 15 Feb 2019 13:49:12 +0300
+
 sssd (1.15.0-3) unstable; urgency=medium
 
   * rules, install: Remove responder service and socket files for now, the

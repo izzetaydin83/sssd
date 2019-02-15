@@ -1,0 +1,630 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DocBook V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<reference>
+<title>Сторінки підручника SSSD</title>
+<refentry>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="include/upstream.xml" />
+
+    <refmeta>
+        <refentrytitle>sssd-ipa</refentrytitle>
+        <manvolnum>5</manvolnum>
+        <refmiscinfo class="manual">Формати файлів та правила</refmiscinfo>
+    </refmeta>
+
+    <refnamediv id='name'>
+        <refname>sssd-ipa</refname>
+        <refpurpose>Модуль надання даних IPA SSSD</refpurpose>
+    </refnamediv>
+
+    <refsect1 id='description'>
+        <title>ОПИС</title>
+        <para>
+            На цій сторінці довідника описано налаштування засобу керування доступом IPA
+для <citerefentry> <refentrytitle>sssd</refentrytitle>
+<manvolnum>8</manvolnum> </citerefentry>. Щоб дізнатися більше про синтаксис
+налаштування, зверніться до розділу «ФОРМАТ ФАЙЛІВ» сторінки довідника
+<citerefentry> <refentrytitle>sssd.conf</refentrytitle>
+<manvolnum>5</manvolnum> </citerefentry>.
+        </para>
+        <para>
+            Інструмент надання даних IPA — модуль, який використовується для
+встановлення з’єднання з сервером IPA. (Інформацію щодо серверів IPA можна
+знайти на сайті freeipa.org.) Цей інструмент надання доступу потребує
+включення комп’ютера до домену IPA. Налаштування майже повністю
+автоматизовано, дані для нього отримуються безпосередньо з сервера.
+        </para>
+        <para>
+            The IPA provider enables SSSD to use the <citerefentry>
+<refentrytitle>sssd-ldap</refentrytitle> <manvolnum>5</manvolnum>
+</citerefentry> identity provider and the <citerefentry>
+<refentrytitle>sssd-krb5</refentrytitle> <manvolnum>5</manvolnum>
+</citerefentry> authentication provider with optimizations for IPA
+environments. The IPA provider accepts the same options used by the
+sssd-ldap and sssd-krb5 providers with some exceptions. However, it is
+neither necessary nor recommended to set these options.
+        </para>
+        <para>
+            The IPA provider primarily copies the traditional ldap and krb5 provider
+default options with some exceptions, the differences are listed in the
+<quote>MODIFIED DEFAULT OPTIONS</quote> section.
+        </para>
+        <para>
+            As an access provider, the IPA provider uses HBAC (host-based access
+control)  rules. Please refer to freeipa.org for more information about
+HBAC. No configuration of access provider is required on the client side.
+        </para>
+        <para>
+            Інструмент надання даних IPA використовуватиме відповідач PAC, якщо квитки
+Kerberos користувачів з довірених областей містять PAC. Для полегшення
+налаштовування відповідач PAC запускається автоматично, якщо налаштовано
+інструмент надання даних ідентифікаторів IPA.
+        </para>
+    </refsect1>
+
+    <refsect1 id='configuration-options'>
+        <title>ПАРАМЕТРИ НАЛАШТУВАННЯ</title>
+        <para>Зверніться до розділу «РОЗДІЛИ ДОМЕНІВ» сторінки довідника (man)
+<citerefentry> <refentrytitle>sssd.conf</refentrytitle>
+<manvolnum>5</manvolnum> </citerefentry>, щоб дізнатися більше про
+налаштування домену SSSD. <variablelist>
+                <varlistentry>
+                    <term>ipa_domain (рядок)</term>
+                    <listitem>
+                        <para>
+                            Визначає назву домену IPA. Є необов’язковим. Якщо не вказано, буде
+використано назву домену з налаштувань.
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>ipa_server, ipa_backup_server (рядок)</term>
+                    <listitem>
+                        <para>
+                            Впорядкований за пріоритетом список IP-адрес або назв вузлів, відокремлених
+комами, серверів IPA, з якими має встановити з’єднання SSSD. Докладніші
+відомості щодо резервних серверів викладено у розділі «РЕЗЕРВ». Цей список є
+необов’язковим, якщо увімкнено автоматичне виявлення служб. Докладніші
+відомості щодо автоматичного виявлення служб наведено у розділі «ПОШУК
+СЛУЖБ».
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>ipa_hostname (рядок)</term>
+                    <listitem>
+                        <para>
+                            Необов’язковий. Може бути встановлено на комп’ютерах, де hostname(5) не
+відповідає повній назві, що використовується доменом IPA для розпізнавання
+цього вузла.
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>dyndns_update (булеве значення)</term>
+                    <listitem>
+                        <para>
+                            Optional. This option tells SSSD to automatically update the DNS server
+built into FreeIPA with the IP address of this client. The update is secured
+using GSS-TSIG. The IP address of the IPA LDAP connection is used for the
+updates, if it is not otherwise specified by using the
+<quote>dyndns_iface</quote> option.
+                        </para>
+                        <para>
+                            ЗАУВАЖЕННЯ: на застарілих системах (зокрема RHEL 5) для надійної роботи у
+цьому режимі типову область дії Kerberos має бути належним чином визначено у
+/etc/krb5.conf
+                        </para>
+                        <para>
+                            ЗАУВАЖЕННЯ: хоча можна використовувати і попередню назву параметра,
+<emphasis>ipa_dyndns_update</emphasis>, користувачам слід переходити на нову
+назву, <emphasis>dyndns_update</emphasis>, у файлі налаштувань.
+                        </para>
+                        <para>
+                            Типове значення: false
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>dyndns_ttl (ціле число)</term>
+                    <listitem>
+                        <para>
+                            TTL, до якого буде застосовано клієнтський запис DNS під час його
+оновлення. Якщо dyndns_update має значення false, цей параметр буде
+проігноровано. Перевизначає TTL на боці сервера, якщо встановлено
+адміністратором.
+                        </para>
+                        <para>
+                            ЗАУВАЖЕННЯ: хоча можна використовувати і попередню назву параметра,
+<emphasis>ipa_dyndns_ttl</emphasis>, користувачам слід переходити на нову
+назву, <emphasis>dyndns_ttl</emphasis>, у файлі налаштувань.
+                        </para>
+                        <para>
+                            Типове значення: 1200 (секунд)
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>dyndns_iface (рядок)</term>
+                    <listitem>
+                        <para>
+                            Optional. Applicable only when dyndns_update is true. Choose the interface
+or a list of interfaces whose IP addresses should be used for dynamic DNS
+updates. Special value <quote>*</quote> implies that IPs from all interfaces
+should be used.
+                        </para>
+                        <para>
+                            ЗАУВАЖЕННЯ: хоча можна використовувати і попередню назву параметра,
+<emphasis>ipa_dyndns_iface</emphasis>, користувачам слід переходити на нову
+назву, <emphasis>dyndns_iface</emphasis>, у файлі налаштувань.
+                        </para>
+                        <para>
+                            Default: Use the IP addresses of the interface which is used for IPA LDAP
+connection
+                        </para>
+                        <para>
+                            Example: dyndns_iface = em1, vnet1, vnet2
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>ipa_enable_dns_sites (булеве значення)</term>
+                    <listitem>
+                        <para>
+                            Вмикає сайти DNS — визначення служб на основі адрес.
+                        </para>
+                        <para>
+                            Якщо вказано значення true і увімкнено визначення служб (див. розділ щодо
+пошуку служб у нижній частині сторінки підручника (man)), SSSD спочатку
+спробує визначення на основі адрес за допомогою запиту, що містить
+"_location.hostname.example.com", а потім повертається до традиційного
+визначення SRV. Якщо визначення на основі адреси буде успішним, сервери IPA,
+виявлені на основі визначення за адресою, вважатимуться основним серверами,
+а сервери IPA, виявлені за допомогою традиційного визначення SRV,
+вважатимуться резервними серверами.
+                        </para>
+                        <para>
+                            Типове значення: false
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>dyndns_refresh_interval (ціле число)</term>
+                    <listitem>
+                        <para>
+                            Визначає, наскільки часто серверний модуль має виконувати періодичні
+оновлення DNS на додачу до автоматичного оновлення, яке виконується під час
+кожного встановлення з’єднання серверного модуля з мережею. Цей параметр не
+є обов’язкоми, його застосовують, лише якщо dyndns_update має значення true.
+                        </para>
+                        <para>
+                            Типове значення: 0 (вимкнено)
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>dyndns_update_ptr (булеве значення)</term>
+                    <listitem>
+                        <para>
+                            Визначає, чи слід явним чином оновлювати запис PTR під час оновлення записів
+DNS клієнта. Застосовується, лише якщо значенням dyndns_update буде true.
+                        </para>
+                        <para>
+                            Значенням цього параметра у більшості розгорнутих систем IPA має бути False,
+оскільки сервер IPA створює записи PTR автоматично після зміни у записах
+переспрямовування.
+                        </para>
+                        <para>
+                            Типове значення: False (вимкнено)
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>dyndns_force_tcp (булеве значення)</term>
+                    <listitem>
+                        <para>
+                            Визначає, чи слід у програмі nsupdate типово використовувати TCP для обміну
+даними з сервером DNS.
+                        </para>
+                        <para>
+                            Типове значення: False (надати змогу nsupdate вибирати протокол)
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>dyndns_server (string)</term>
+                    <listitem>
+                        <para>
+                            The DNS server to use when performing a DNS update. In most setups, it's
+recommended to leave this option unset.
+                        </para>
+                        <para>
+                            Setting this option makes sense for environments where the DNS server is
+different from the identity server.
+                        </para>
+                        <para>
+                            Please note that this option will be only used in fallback attempt when
+previous attempt using autodetected settings failed.
+                        </para>
+                        <para>
+                            Default: None (let nsupdate choose the server)
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>ipa_hbac_search_base (рядок)</term>
+                    <listitem>
+                        <para>
+                            Необов’язковий. Використати вказаний рядок як основу пошуку пов’язаних з
+HBAC об’єктів.
+                        </para>
+                        <para>
+                            Типове значення: використання базової назви домену
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>ipa_host_search_base (рядок)</term>
+                    <listitem>
+                        <para>
+                            Необов’язковий. Використати вказаний рядок як основу пошуку об’єктів вузлів.
+                        </para>
+                        <para>
+                            Ознайомтеся з розділом щодо «ldap_search_base», щоб дізнатися більше про
+налаштування декількох основ пошуку.
+                        </para>
+                        <para>
+                            Типове значення: значення <emphasis>ldap_search_base</emphasis>
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>ipa_selinux_search_base (рядок)</term>
+                    <listitem>
+                        <para>
+                            Необов’язковий. Використати вказаний рядок як основу пошуку карт
+користувачів SELinux.
+                        </para>
+                        <para>
+                            Ознайомтеся з розділом щодо «ldap_search_base», щоб дізнатися більше про
+налаштування декількох основ пошуку.
+                        </para>
+                        <para>
+                            Типове значення: значення <emphasis>ldap_search_base</emphasis>
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>ipa_subdomains_search_base (рядок)</term>
+                    <listitem>
+                        <para>
+                            Необов’язковий. Використати вказаний рядок як основу пошуку надійних
+доменів.
+                        </para>
+                        <para>
+                            Ознайомтеся з розділом щодо «ldap_search_base», щоб дізнатися більше про
+налаштування декількох основ пошуку.
+                        </para>
+                        <para>
+                            Типове значення: значення <emphasis>cn=trusts,%basedn</emphasis>
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>ipa_master_domain_search_base (рядок)</term>
+                    <listitem>
+                        <para>
+                            Необов’язковий. Використати вказаний рядок як основу пошуку основного
+об’єкта домену.
+                        </para>
+                        <para>
+                            Ознайомтеся з розділом щодо «ldap_search_base», щоб дізнатися більше про
+налаштування декількох основ пошуку.
+                        </para>
+                        <para>
+                            Типове значення: значення виразу <emphasis>cn=ad,cn=etc,%basedn</emphasis>
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>ipa_views_search_base (рядок)</term>
+                    <listitem>
+                        <para>
+                            Необов’язковий. Використати вказаний рядок як основу пошуку контейнерів
+перегляду.
+                        </para>
+                        <para>
+                            Ознайомтеся з розділом щодо «ldap_search_base», щоб дізнатися більше про
+налаштування декількох основ пошуку.
+                        </para>
+                        <para>
+                            Типове значення: значення <emphasis>cn=views,cn=accounts,%basedn</emphasis>
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>krb5_realm (рядок)</term>
+                    <listitem>
+                        <para>
+                            Назва області дії Kerberos. Є необов’язковою, типовим значенням є значення
+«ipa_domain».
+                        </para>
+                        <para>
+                            Назва області дії Kerberos має особливе значення у IPA: цю назву буде
+перетворено у основний DN для виконання дій LDAP.
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>krb5_confd_path (рядок)</term>
+                    <listitem>
+                        <para>
+                            Абсолютний шлях до каталогу, у якому SSSD має зберігати фрагменти
+налаштувань Kerberos.
+                        </para>
+                        <para>
+                            Щоб вимкнути створення фрагментів налаштувань, встановіть для параметра
+значення «none».
+                        </para>
+                        <para>
+                            Типове значення: не встановлено (підкаталог krb5.include.d каталогу pubconf
+SSSD)
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>ipa_hbac_refresh (ціле число)</term>
+                    <listitem>
+                        <para>
+                            Проміжок часу між послідовними пошуками правил HBAC щодо сервера IPA. Зміна
+може зменшити час затримки та навантаження на сервер IPA, якщо протягом
+короткого періоду часу надходить багато запитів щодо керування доступом.
+                        </para>
+                        <para>
+                            Типове значення: 5 (секунд)
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>ipa_hbac_selinux (ціле число)</term>
+                    <listitem>
+                        <para>
+                            Проміжок часу між послідовними пошуками у картах SELinux щодо сервера
+IPA. Зміна може зменшити час затримки та навантаження на сервер IPA, якщо
+протягом короткого періоду часу надходить багато запитів щодо входу
+користувача до системи.
+                        </para>
+                        <para>
+                            Типове значення: 5 (секунд)
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>ipa_server_mode (булеве значення)</term>
+                    <listitem>
+                        <para>
+                            Цей параметр має встановлюватися лише засобом встановлення IPA.
+                        </para>
+                        <para>
+                            За допомогою цього параметра можна визначити, чи працює SSSD на сервері IPA
+і має виконувати пошуки користувачів і груп з довірених доменів окремо.
+                        </para>
+                        <para>
+                            Типове значення: false
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry condition="with_autofs">
+                    <term>ipa_automount_location (рядок)</term>
+                    <listitem>
+                        <para>
+                            Адреса автоматичного монтування, яку буде використовувати цей клієнт IPA
+                        </para>
+                        <para>
+                            Типове значення: адреса з назвою "default"
+                        </para>
+                        <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="include/autofs_restart.xml" />
+                    </listitem>
+                </varlistentry>
+            </variablelist>
+        </para>
+        <refsect2 id='views'>
+            <title>ПЕРЕГЛЯДИ і ПЕРЕВИЗНАЧЕННЯ</title>
+            <para>
+                SSSD може обробляти перегляди та перевизначення, які пропонуються FreeIPA
+4.1 та новішими версіями. Оскільки усі шляхи і класи об’єктів зафіксовано на
+боці сервера, в основному, немає потреби у додатковому налаштовуванні. Для
+повноти, усі відповідні параметри наведено у списку разом з їхніми типовими
+значеннями.  <variablelist>
+                    <varlistentry>
+                        <term>ipa_view_class (рядок)</term>
+                        <listitem>
+                            <para>
+                                Клас об’єктів для контейнерів перегляду.
+                            </para>
+                            <para>
+                                Типове значення: nsContainer
+                            </para>
+                        </listitem>
+                    </varlistentry>
+
+                    <varlistentry>
+                        <term>ipa_view_name (рядок)</term>
+                        <listitem>
+                            <para>
+                                Назва атрибута, у якому зберігається назва перегляду.
+                            </para>
+                            <para>
+                                Типове значення: cn
+                            </para>
+                        </listitem>
+                    </varlistentry>
+
+                    <varlistentry>
+                        <term>ipa_overide_object_class (рядок)</term>
+                        <listitem>
+                            <para>
+                                Клас об’єктів для об’єктів перевизначення
+                            </para>
+                            <para>
+                                Типове значення: ipaOverrideAnchor
+                            </para>
+                        </listitem>
+                    </varlistentry>
+
+                    <varlistentry>
+                        <term>ipa_anchor_uuid (рядок)</term>
+                        <listitem>
+                            <para>
+                                Назва атрибута, у якому зберігається посилання на початковий об’єкт на
+віддаленому домені.
+                            </para>
+                            <para>
+                                Типове значення: ipaAnchorUUID
+                            </para>
+                        </listitem>
+                    </varlistentry>
+
+                    <varlistentry>
+                        <term>ipa_user_override_object_class (рядок)</term>
+                        <listitem>
+                            <para>
+                                Назва класу об’єктів для перевизначень користувачів. Використовується для
+визначення того, чи знайдений об’єкт перевизначення пов’язано з користувачем
+або групою.
+                            </para>
+                            <para>
+                                Перевизначення користувачів можуть містити атрибути, задані
+                                <itemizedlist>
+                                    <listitem>
+                                        <para>ldap_user_name</para>
+                                    </listitem>
+                                    <listitem>
+                                        <para>ldap_user_uid_number</para>
+                                    </listitem>
+                                    <listitem>
+                                        <para>ldap_user_gid_number</para>
+                                    </listitem>
+                                    <listitem>
+                                        <para>ldap_user_gecos</para>
+                                    </listitem>
+                                    <listitem>
+                                        <para>ldap_user_home_directory</para>
+                                    </listitem>
+                                    <listitem>
+                                        <para>ldap_user_shell</para>
+                                    </listitem>
+                                    <listitem>
+                                        <para>ldap_user_ssh_public_key</para>
+                                    </listitem>
+                                </itemizedlist>
+                            </para>
+                            <para>
+                                Типове значення: ipaUserOverride
+                            </para>
+                        </listitem>
+                    </varlistentry>
+
+                    <varlistentry>
+                        <term>ipa_group_override_object_class (рядок)</term>
+                        <listitem>
+                            <para>
+                                Назва класу об’єктів для перевизначень груп. Використовується для визначення
+того, чи знайдений об’єкт перевизначення пов’язано з користувачем або
+групою.
+                            </para>
+                            <para>
+                                Перевизначення груп можуть містити атрибути, задані
+                                <itemizedlist>
+                                    <listitem>
+                                        <para>ldap_group_name</para>
+                                    </listitem>
+                                    <listitem>
+                                        <para>ldap_group_gid_number</para>
+                                    </listitem>
+                                </itemizedlist>
+                            </para>
+                            <para>
+                                Типове значення: ipaGroupOverride
+                            </para>
+                        </listitem>
+                    </varlistentry>
+                </variablelist>
+            </para>
+        </refsect2>
+    </refsect1>
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="include/ipa_modified_defaults.xml" />
+
+    <refsect1 id='subdomains_provider'>
+        <title>СЛУЖБА ПІДДОМЕНІВ</title>
+        <para>
+            Поведінка інструмента надання даних піддоменів IPA залежить від того, у який
+спосіб його налаштовано: явний чи неявний.
+        </para>
+        <para>
+            Якщо у розділі домену sssd.conf буде знайдено запис параметра
+«subdomains_provider = ipa», інструмент надання даних піддоменів IPA
+налаштовано явно, отже всі запити піддоменів надсилатимуться серверу IPA,
+якщо це потрібно.
+        </para>
+        <para>
+            Якщо у розділі домену sssdconf не встановлено параметр
+«subdomains_provider», але встановлено параметр «id_provider = ipa»,
+інструмент надання даних піддоменів IPA налаштовано неявним чином. У цьому
+випадку спроба запиту щодо піддомену зазнає невдачі і вказуватиме на те, що
+на сервері не передбачено піддоменів, тобто його не налаштовано на довіру,
+отже інструмент надання даних піддоменів IPA вимкнено. Щойно мине година або
+відкриється доступ до інструмента надання даних IPA, інструмент надання
+даних піддоменів буде знову увімкнено.
+        </para>
+    </refsect1>
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="include/failover.xml" />
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="include/service_discovery.xml" />
+
+    <refsect1 id='example'>
+        <title>ПРИКЛАД</title>
+        <para>
+            У наведеному нижче прикладі припускаємо, що SSSD налаштовано належним чином,
+а example.com є одним з доменів у розділі
+<replaceable>[sssd]</replaceable>. У прикладі продемонстровано лише
+параметри доступу, специфічні для засобу ipa.
+        </para>
+        <para>
+<programlisting>
+[domain/example.com]
+id_provider = ipa
+ipa_server = ipaserver.example.com
+ipa_hostname = myhost.example.com
+</programlisting>
+        </para>
+    </refsect1>
+
+	<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="include/seealso.xml" />
+
+</refentry>
+</reference>

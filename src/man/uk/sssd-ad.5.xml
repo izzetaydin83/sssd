@@ -1,0 +1,971 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DocBook V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<reference>
+<title>Сторінки підручника SSSD</title>
+<refentry>
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="include/upstream.xml" />
+
+    <refmeta>
+        <refentrytitle>sssd-ad</refentrytitle>
+        <manvolnum>5</manvolnum>
+        <refmiscinfo class="manual">Формати файлів та правила</refmiscinfo>
+    </refmeta>
+
+    <refnamediv id='name'>
+        <refname>sssd-ad</refname>
+        <refpurpose>Модуль надання даних Active Directory SSSD</refpurpose>
+    </refnamediv>
+
+    <refsect1 id='description'>
+        <title>ОПИС</title>
+        <para>
+            На цій сторінці довідника описано налаштування засобу керування доступом AD
+для <citerefentry> <refentrytitle>sssd</refentrytitle>
+<manvolnum>8</manvolnum> </citerefentry>. Щоб дізнатися більше про синтаксис
+налаштування, зверніться до розділу «ФОРМАТ ФАЙЛІВ» сторінки довідника
+<citerefentry> <refentrytitle>sssd.conf</refentrytitle>
+<manvolnum>5</manvolnum> </citerefentry>.
+        </para>
+        <para>
+            Засіб надання даних AD — це модуль, що використовується для встановлення
+з’єднання з сервером Active Directory. Цей засіб потребує долучення
+комп’ютера до домену AD та доступності таблиці ключів.
+        </para>
+        <para>
+            У засобі надання даних AD передбачено підтримку встановлення з’єднання з
+Active Directory 2008 R2 або пізнішою версією. Робота з попередніми версіями
+можлива, але не підтримується.
+        </para>
+        <para>
+            The AD provider can be used to get user information and authenticate users
+from trusted domains. Currently only trusted domains in the same forest are
+recognized. In addition servers from trusted domains are always
+auto-discovered.
+        </para>
+        <para>
+            The AD provider enables SSSD to use the <citerefentry>
+<refentrytitle>sssd-ldap</refentrytitle> <manvolnum>5</manvolnum>
+</citerefentry> identity provider and the <citerefentry>
+<refentrytitle>sssd-krb5</refentrytitle> <manvolnum>5</manvolnum>
+</citerefentry> authentication provider with optimizations for Active
+Directory environments. The AD provider accepts the same options used by the
+sssd-ldap and sssd-krb5 providers with some exceptions. However, it is
+neither necessary nor recommended to set these options.
+        </para>
+        <para>
+            The AD provider primarily copies the traditional ldap and krb5 provider
+default options with some exceptions, the differences are listed in the
+<quote>MODIFIED DEFAULT OPTIONS</quote> section.
+        </para>
+        <para>
+            The AD provider can also be used as an access, chpass, sudo and autofs
+provider. No configuration of the access provider is required on the client
+side.
+        </para>
+        <para>
+            Типово, модуль надання даних AD виконуватиме прив’язку до значень UID та GID
+з параметра objectSID у Active Directory. Докладніший опис наведено у
+розділі «ВСТАНОВЛЕННЯ ВІДПОВІДНОСТІ ІДЕНТИФІКАТОРІВ». Якщо вам потрібно
+вимкнути встановлення відповідності ідентифікаторів і покладатися на
+атрибути POSIX, визначені у Active Directory, вам слід встановити
+<programlisting>
+ldap_id_mapping = False
+            </programlisting> Щоб отримати дані щодо
+користувачів і груп за допомогою атрибутів POSIX з надійних доменів,
+адміністратор AD має переконатися, що атрибути POSIX відтворюються у
+загальному каталозі (Global Catalog).
+        </para>
+        <para>
+            Дані щодо користувачів, груп та інших записів, які обслуговуються SSSD, у
+модулі надання даних AD завжди обробляються із врахуванням регістру символів
+для забезпечення сумісності з реалізацією Active Directory у LDAP.
+        </para>
+    </refsect1>
+
+    <refsect1 id='configuration-options'>
+        <title>ПАРАМЕТРИ НАЛАШТУВАННЯ</title>
+        <para>Зверніться до розділу «РОЗДІЛИ ДОМЕНІВ» сторінки довідника (man)
+<citerefentry> <refentrytitle>sssd.conf</refentrytitle>
+<manvolnum>5</manvolnum> </citerefentry>, щоб дізнатися більше про
+налаштування домену SSSD. <variablelist>
+                <varlistentry>
+                    <term>ad_domain (рядок)</term>
+                    <listitem>
+                        <para>
+                            Визначає назву домену Active Directory. Є необов’язковим. Якщо не вказано,
+буде використано назву домену з налаштувань.
+                        </para>
+                        <para>
+                            Для забезпечення належної роботи цей параметр слід вказати у форматі запису
+малими літерами повної версії назви домену Active Directory.
+                        </para>
+                        <para>
+                            Скорочена назва домену (також відома як назва NetBIOS або проста назва)
+автоматично визначається засобами SSSD.
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>ad_enabled_domains (string)</term>
+                    <listitem>
+                        <para>
+                            A comma-separated list of enabled Active Directory domains.  If provided,
+SSSD will ignore any domains not listed in this option. If left unset, all
+domains from the AD forest will be available.
+                        </para>
+                        <para>
+                            For proper operation, this option must be specified in all lower-case and as
+the fully qualified domain name of the Active Directory domain. For example:
+<programlisting>
+ad_enabled_domains = sales.example.com, eng.example.com
+                            </programlisting>
+                        </para>
+                        <para>
+                            The short domain name (also known as the NetBIOS or the flat name) will be
+autodetected by SSSD.
+                        </para>
+                        <para>
+                            Типове значення: не встановлено
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>ad_server, ad_backup_server (рядок)</term>
+                    <listitem>
+                        <para>
+                            The comma-separated list of hostnames of the AD servers to which SSSD should
+connect in order of preference. For more information on failover and server
+redundancy, see the <quote>FAILOVER</quote> section.
+                        </para>
+                        <para>
+                            This is optional if autodiscovery is enabled.  For more information on
+service discovery, refer to the <quote>SERVICE DISCOVERY</quote> section.
+                        </para>
+                        <para>
+                            Note: Trusted domains will always auto-discover servers even if the primary
+server is explicitly defined in the ad_server option.
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>ad_hostname (рядок)</term>
+                    <listitem>
+                        <para>
+                            Необов’язковий. Може бути встановлено на комп’ютерах, де hostname(5) не
+відповідає повній назві, що використовується доменом Active Directory для
+розпізнавання цього вузла.
+                        </para>
+                        <para>
+                            Це поле використовується для визначення основної назви вузла, яка
+використовуватиметься у таблиці ключів. Ця назва має відповідати назві
+вузла, для якого випущено таблицю ключів.
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>ad_enable_dns_sites (булеве значення)</term>
+                    <listitem>
+                        <para>
+                            Вмикає сайти DNS — визначення служб на основі адрес.
+                        </para>
+                        <para>
+                            Якщо вказано значення true і увімкнено визначення служб (див. розділ щодо
+пошуку служб у нижній частині сторінки підручника (man)), SSSD спочатку
+спробує визначити сервер Active Directory для встановлення з’єднання на
+основі використання визначення сайтів Active Directory і повертається до
+визначення за записами SRV DNS, якщо сайт AD не буде знайдено. Налаштування
+SRV DNS, зокрема домен пошуку, використовуються також під час визначення
+сайтів.
+                        </para>
+                        <para>
+                            Типове значення: true
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>ad_access_filter (рядок)</term>
+                    <listitem>
+                        <para>
+                            Цей параметр визначає фільтр керування доступом LDAP, якому має відповідати
+запис користувача для того, щоб йому було надано доступ. Будь ласка,
+зауважте, що слід явним чином встановити для параметра «access_provider»
+значення «ad», щоб цей параметр почав діяти.
+                        </para>
+                        <para>
+                            У параметрі також передбачено підтримку визначення різних фільтрів для
+окремих доменів або дерев. Цей розширений фільтр повинен мати такий формат:
+«КЛЮЧОВЕ СЛОВО:НАЗВА:ФІЛЬТР». Набір підтримуваних ключових слів: «DOM»,
+«FOREST» або ключове слово слід пропустити.
+                        </para>
+                        <para>
+                            Якщо вказано ключове слово «DOM» або ключового слова не вказано, «НАЗВА»
+визначає домен або піддомен, до якого застосовується фільтрування. Якщо
+ключовим словом є «FOREST», фільтр застосовується до усіх доменів з лісу,
+вказаного значенням «НАЗВА».
+                        </para>
+                        <para>
+                            Декілька фільтрів можна відокремити символом «?», подібно до способу
+визначення фільтрів у базах для пошуку.
+                        </para>
+                        <para>
+                            Nested group membership must be searched for using a special OID
+<quote>:1.2.840.113556.1.4.1941:</quote> in addition to the full
+DOM:domain.example.org: syntax to ensure the parser does not attempt to
+interpret the colon characters associated with the OID. If you do not use
+this OID then nested group membership will not be resolved. See usage
+example below and refer here for further information about the OID: <ulink
+url="https://msdn.microsoft.com/en-us/library/cc223367.aspx"> [MS-ADTS]
+section LDAP extensions</ulink>
+                        </para>
+                        <para>
+                            Завжди використовується відповідник з найвищим рівнем
+відповідності. Наприклад, якщо визначено фільтрування для домену, учасником
+якого є користувач, і загальне фільтрування, буде використано фільтрування
+для окремого домену. Якщо буде виявлено декілька відповідників з однаковою
+специфікацією, використовуватиметься лише перший з них.
+                        </para>
+                        <para>
+                            Приклади:
+                        </para>
+                        <programlisting>
+# apply filter on domain called dom1 only:
+dom1:(memberOf=cn=admins,ou=groups,dc=dom1,dc=com)
+
+# apply filter on domain called dom2 only:
+DOM:dom2:(memberOf=cn=admins,ou=groups,dc=dom2,dc=com)
+
+# apply filter on forest called EXAMPLE.COM only:
+FOREST:EXAMPLE.COM:(memberOf=cn=admins,ou=groups,dc=example,dc=com)
+
+# apply filter for a member of a nested group in dom1:
+DOM:dom1:(memberOf:1.2.840.113556.1.4.1941:=cn=nestedgroup,ou=groups,dc=example,dc=com)
+                        </programlisting>
+                        <para>
+                            Типове значення: не встановлено
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>ad_site (рядок)</term>
+                    <listitem>
+                        <para>
+                          Визначає сайт AD, з яким має встановлювати з’єднання клієнт. Якщо не буде
+вказано, виконуватиметься спроба автоматичного визначення сайта AD.
+                        </para>
+                        <para>
+                            Типове значення: не встановлено
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>ad_enable_gc (булеве значення)</term>
+                    <listitem>
+                        <para>
+                            Типово, SSSD для отримання даних користувачів з надійних (довірених) доменів
+спочатку встановлює з’єднання із загальним каталогом (Global Catalog). Якщо
+ж отримати дані не вдасться, система використовує порт LDAP для отримання
+даних щодо участі у групах. Вимикання цього параметра призведе до того, що
+SSSD встановлюватиме зв’язок лише з портом LDAP поточного сервера AD.
+                        </para>
+                        <para>
+                            Будь ласка, зауважте, що вимикання підтримки загального каталогу (Global
+Catalog) не призведе до вимикання спроб отримати дані користувачів з
+надійних (довірених) доменів. Просто SSSD намагатиметься отримати ці ж дані
+за допомогою порту LDAP надійних доменів. Втім, загальним каталогом (Global
+Catalog) доведеться скористатися для визначення зв’язків даних щодо участі у
+групах для різних доменів.
+                        </para>
+                        <para>
+                            Типове значення: true
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>ad_gpo_access_control (рядок)</term>
+                    <listitem>
+                        <para>
+                            Цей параметр визначає режим роботи для функціональних можливостей керування
+доступом на основі GPO: працюватиме система у вимкненому режимі, режимі
+примушення чи дозвільному режимі. Будь ласка, зауважте, що для того, щоб цей
+параметр запрацював, слід явним чином встановити для параметра
+«access_provider» значення «ad».
+                        </para>
+                        <para>
+                            Функціональні можливості з керування доступом на основі GPO використовують
+параметри правил GPO для визначення того, може чи не може той чи інший
+користувач увійти до системи певного вузла мережі.
+                        </para>
+                        <para>
+                            ЗАУВАЖЕННЯ: якщо встановлено режим роботи «примусовий» (enforcing), можлива
+ситуація, коли користувачі, які раніше мали доступ до входу, позбудуться
+такого доступу (через використання параметрів правил GPO). З метою полегшити
+перехід на нову систему для адміністраторів передбачено дозвільний режим
+доступу (permissive), за якого правила керування доступом не
+встановлюватимуться у примусовому порядку. Програма лише перевірятиме
+відповідність цим правилам і виводитиме до системного журналу повідомлення,
+якщо доступ було надано усупереч цим правилам. Вивчення журналу надасть
+змогу адміністраторам внести відповідні зміни до встановлення примусового
+режиму (enforcing).
+                        </para>
+                        <para>
+                            У цього параметра є три підтримуваних значення:
+                            <itemizedlist>
+                                <listitem>
+                                    <para>
+                                        disabled: правила керування доступом, засновані на GPO, не обробляються і не
+використовуються примусово.
+                                    </para>
+                                </listitem>
+                                <listitem>
+                                    <para>
+                                        enforcing: правила керування доступом, засновані на GPO, обробляються і
+використовуються примусово.
+                                    </para>
+                                </listitem>
+                                <listitem>
+                                    <para>
+                                        permissive: виконати перевірку відповідності правилам керування доступом на
+основі GPO, але не наполягати на їхньому виконанні. Якщо правила не
+виконуються, вивести до системного журналу повідомлення про те, що
+користувачеві було б заборонено доступ, якби використовувався режим
+enforcing.
+                                    </para>
+                                </listitem>
+                            </itemizedlist>
+                        </para>
+                        <para condition="gpo_default_permissive">
+                            Типове значення: permissive
+                        </para>
+                        <para condition="gpo_default_enforcing">
+                            Типове значення: enforcing
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>ad_gpo_cache_timeout (ціле число)</term>
+                    <listitem>
+                        <para>
+                            Проміжок часу між послідовними пошуками файлів правил GPO щодо сервера
+AD. Зміна може зменшити час затримки та навантаження на сервер AD, якщо
+протягом короткого періоду часу надходить багато запитів щодо керування
+доступом.
+                        </para>
+                        <para>
+                            Типове значення: 5 (секунд)
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>ad_gpo_map_interactive (рядок)</term>
+                    <listitem>
+                        <para>
+                            Список назв служб PAM, відокремлених комами, для яких керування доступом на
+основі GPO виконуватиметься на основі параметрів правил
+InteractiveLogonRight і DenyInteractiveLogonRight.
+                        </para>
+                        <para>
+                            Зауваження: у редакторі керування правилами для груп це значення має назву
+«Дозволити локальний вхід» («Allow log on locally») та «Заборонити локальний
+вхід» («Deny log on locally»).
+                        </para>
+                        <para>
+                            Можна додати іншу назву служби PAM до типового набору за допомогою
+конструкції «+назва_служби» або явним чином вилучити назву служби PAM з
+типового набору за допомогою конструкції «-назва_служби». Наприклад, щоб
+замінити типову назву служби PAM для цього входу (наприклад, «login») з
+нетиповою назвою служби pam (наприклад, «my_pam_service»), вам слід
+скористатися такими налаштуваннями: <programlisting>
+ad_gpo_map_interactive = +my_pam_service, -login
+                            </programlisting>
+                        </para>
+                        <para>
+                            Типове значення: типовий набір назв служб PAM складається з таких значень:
+                            <itemizedlist>
+                                <listitem>
+                                    <para>
+                                        login
+                                    </para>
+                                </listitem>
+                                <listitem>
+                                    <para>
+                                        su
+                                    </para>
+                                </listitem>
+                                <listitem>
+                                    <para>
+                                        su-l
+                                    </para>
+                                </listitem>
+                                <listitem>
+                                    <para>
+                                        gdm-fingerprint
+                                    </para>
+                                </listitem>
+                                <listitem>
+                                    <para>
+                                        gdm-password
+                                    </para>
+                                </listitem>
+                                <listitem>
+                                    <para>
+                                        gdm-smartcard
+                                    </para>
+                                </listitem>
+                                <listitem>
+                                    <para>
+                                        kdm
+                                    </para>
+                                </listitem>
+                                <listitem>
+                                    <para>
+                                        lightdm
+                                    </para>
+                                </listitem>
+                                <listitem>
+                                    <para>
+                                        lxdm
+                                    </para>
+                                </listitem>
+                                <listitem>
+                                    <para>
+                                        sddm
+                                    </para>
+                                </listitem>
+                                <listitem>
+                                    <para>
+                                        unity
+                                    </para>
+                                </listitem>
+                                <listitem>
+                                    <para>
+                                        xdm
+                                    </para>
+                                </listitem>
+                            </itemizedlist>
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>ad_gpo_map_remote_interactive (рядок)</term>
+                    <listitem>
+                        <para>
+                            Список назв служб PAM, відокремлених комами, для яких керування доступом на
+основі GPO засновано на параметрах захисту RemoteInteractiveLogonRight і
+DenyRemoteInteractiveLogonRight.
+                        </para>
+                        <para>
+                            Зауваження: у редакторі керування правилами щодо груп це значення
+називається «Дозволити вхід за допомогою служб віддаленої стільниці» («Allow
+log on through Remote Desktop Services») та «Заборонити вхід за допомогою
+служб віддаленої стільниці» («Deny log on through Remote Desktop Services»).
+                        </para>
+                        <para>
+                            Можна додати іншу назву служби PAM до типового набору за допомогою
+конструкції «+назва_служби» або явним чином вилучити назву служби PAM з
+типового набору за допомогою конструкції «-назва_служби». Наприклад, щоб
+замінити типову назву служби PAM для цього входу (наприклад, «sshd») з
+нетиповою назвою служби pam (наприклад, «my_pam_service»), вам слід
+скористатися такими налаштуваннями: <programlisting>
+ad_gpo_map_remote_interactive = +my_pam_service, -sshd
+                            </programlisting>
+                        </para>
+                        <para>
+                            Типове значення: типовий набір назв служб PAM складається з таких значень:
+                            <itemizedlist>
+                                <listitem>
+                                    <para>
+                                        sshd
+                                    </para>
+                                </listitem>
+                                <listitem>
+                                    <para>
+                                        cockpit
+                                    </para>
+                                </listitem>
+                            </itemizedlist>
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>ad_gpo_map_network (рядок)</term>
+                    <listitem>
+                        <para>
+                            Список назв служб PAM, відокремлених комами, для яких керування доступом на
+основі GPO засновано на параметрах захисту NetworkLogonRight і
+DenyNetworkLogonRight.
+                        </para>
+                        <para>
+                            Зауваження: у редакторі керування правилами щодо груп це значення
+називається  «Відкрити доступ до цього комп’ютера із мережі» («Access this
+computer from the network») і «Заборонити доступ до цього комп’ютера із
+мережі» (Deny access to this computer from the network»).
+                        </para>
+                        <para>
+                            Можна додати іншу назву служби PAM до типового набору за допомогою
+конструкції «+назва_служби» або явним чином вилучити назву служби PAM з
+типового набору за допомогою конструкції «-назва_служби». Наприклад, щоб
+замінити типову назву служби PAM для цього входу (наприклад, «ftp») з
+нетиповою назвою служби pam (наприклад, «my_pam_service»), вам слід
+скористатися такими налаштуваннями: <programlisting>
+ad_gpo_map_network = +my_pam_service, -ftp
+                            </programlisting>
+                        </para>
+                        <para>
+                            Типове значення: типовий набір назв служб PAM складається з таких значень:
+                            <itemizedlist>
+                                <listitem>
+                                    <para>
+                                        ftp
+                                    </para>
+                                </listitem>
+                                <listitem>
+                                    <para>
+                                        samba
+                                    </para>
+                                </listitem>
+                            </itemizedlist>
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>ad_gpo_map_batch (рядок)</term>
+                    <listitem>
+                        <para>
+                            Список назв служб PAM, відокремлених комами, для яких керування доступом на
+основі GPO засновано на параметрах захисту BatchLogonRight і
+DenyBatchLogonRight.
+                        </para>
+                        <para>
+                            Зауваження: у редакторі керування правилами щодо груп це значення
+називається «Дозволити вхід як пакетне завдання» («Allow log on as a batch
+job») і «Заборонити вхід як пакетне завдання» («Deny log on as a batch
+job»).
+                        </para>
+                        <para>
+                            Можна додати іншу назву служби PAM до типового набору за допомогою
+конструкції «+назва_служби» або явним чином вилучити назву служби PAM з
+типового набору за допомогою конструкції «-назва_служби». Наприклад, щоб
+замінити типову назву служби PAM для цього входу (наприклад, «crond») з
+нетиповою назвою служби pam (наприклад, «my_pam_service»), вам слід
+скористатися такими налаштуваннями: <programlisting>
+ad_gpo_map_batch = +my_pam_service, -crond
+                            </programlisting>
+                        </para>
+                        <para>
+                            Типове значення: типовий набір назв служб PAM складається з таких значень:
+                            <itemizedlist>
+                                <listitem>
+                                    <para>
+                                        crond
+                                    </para>
+                                </listitem>
+                            </itemizedlist>
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>ad_gpo_map_service (рядок)</term>
+                    <listitem>
+                        <para>
+                            Список назв служб PAM, відокремлених комами, для яких керування доступом на
+основі GPO засновано на параметрах захисту ServiceLogonRight і
+DenyServiceLogonRight.
+                        </para>
+                        <para>
+                            Зауваження: у редакторі керування правилами щодо груп це значення
+називається «Дозволити вхід як службу» («Allow log on as a service») і
+«Заборонити вхід як службу» («Deny log on as a service»).
+                        </para>
+                        <para>
+                            Можна додати іншу назву служби PAM до типового набору за допомогою
+конструкції «+назва_служби». Оскільки типовий набір є порожнім, назви служби
+з типового набору назв служб PAM вилучити неможливо. Наприклад, щоб додати
+нетипову назву служби PAM (наприклад, «my_pam_service»), вам слід
+скористатися такими налаштуваннями: <programlisting>
+ad_gpo_map_service = +my_pam_service
+                            </programlisting>
+                        </para>
+                        <para>
+                          Типове значення: not set
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>ad_gpo_map_permit (рядок)</term>
+                    <listitem>
+                        <para>
+                            Список назв служб PAM, відокремлених комами, яким завжди надається доступ на
+основі GPO, незалежно від будь-яких прав входу GPO.
+                        </para>
+                        <para>
+                            Можна додати іншу назву служби PAM до типового набору за допомогою
+конструкції «+назва_служби» або явним чином вилучити назву служби PAM з
+типового набору за допомогою конструкції «-назва_служби». Наприклад, щоб
+замінити типову назву служби PAM для безумовного дозволеного доступу
+(наприклад, «sudo») з нетиповою назвою служби pam (наприклад,
+«my_pam_service»), вам слід скористатися такими налаштуваннями: <programlisting>
+ad_gpo_map_permit = +my_pam_service, -sudo
+                            </programlisting>
+                        </para>
+                        <para>
+                            Типове значення: типовий набір назв служб PAM складається з таких значень:
+                            <itemizedlist>
+                                <listitem>
+                                    <para>
+                                        polkit-1
+                                    </para>
+                                </listitem>
+                                <listitem>
+                                    <para>
+                                        sudo
+                                    </para>
+                                </listitem>
+                                <listitem>
+                                    <para>
+                                        sudo-i
+                                    </para>
+                                </listitem>
+                                <listitem>
+                                    <para>
+                                        systemd-user
+                                    </para>
+                                </listitem>
+                            </itemizedlist>
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>ad_gpo_map_deny (рядок)</term>
+                    <listitem>
+                        <para>
+                            Список назв служб PAM, відокремлених комами, яким завжди заборонено доступ
+на основі GPO, незалежно від будь-яких прав входу GPO.
+                        </para>
+                        <para>
+                            Можна додати іншу назву служби PAM до типового набору за допомогою
+конструкції «+назва_служби». Оскільки типовий набір є порожнім, назви служби
+з типового набору назв служб PAM вилучити неможливо. Наприклад, щоб додати
+нетипову назву служби PAM (наприклад, «my_pam_service»), вам слід
+скористатися такими налаштуваннями: <programlisting>
+ad_gpo_map_deny = +my_pam_service
+                            </programlisting>
+                        </para>
+                        <para>
+                          Типове значення: not set
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>ad_gpo_default_right (рядок)</term>
+                    <listitem>
+                        <para>
+                            За допомогою цього параметра визначається спосіб керування доступом для назв
+служб PAM, які не вказано явним чином у одному з параметрів
+ad_gpo_map_*. Цей параметр може бути встановлено у два різних
+способи. По-перше, цей параметр можна встановити так, що
+використовуватиметься типовий вхід. Наприклад, якщо для цього параметра
+встановлено значення «interactive», непов’язані назви служб PAM
+оброблятимуться на основі параметрів правил InteractiveLogonRight і
+DenyInteractiveLogonRight. Крім того, для цього параметра можна встановити
+таке значення, щоб система завжди дозволяла або забороняла доступ для
+непов’язаних назв служб PAM.
+                        </para>
+                        <para>
+                            Передбачені значення для цього параметра:
+                            <itemizedlist>
+                                <listitem>
+                                    <para>
+                                        interactive
+                                    </para>
+                                </listitem>
+                                <listitem>
+                                    <para>
+                                        remote_interactive
+                                    </para>
+                                </listitem>
+                                <listitem>
+                                    <para>
+                                        network
+                                    </para>
+                                </listitem>
+                                <listitem>
+                                    <para>
+                                        batch
+                                    </para>
+                                </listitem>
+                                <listitem>
+                                    <para>
+                                        service
+                                    </para>
+                                </listitem>
+                                <listitem>
+                                    <para>
+                                        permit
+                                    </para>
+                                </listitem>
+                                <listitem>
+                                    <para>
+                                        deny
+                                    </para>
+                                </listitem>
+                            </itemizedlist>
+                        </para>
+                        <para>
+                            Типове значення: deny
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>ad_maximum_machine_account_password_age (integer)</term>
+                    <listitem>
+                        <para>
+                            SSSD will check once a day if the machine account password is older than the
+given age in days and try to renew it. A value of 0 will disable the renewal
+attempt.
+                        </para>
+                        <para>
+                            Default: 30 days
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>ad_machine_account_password_renewal_opts (string)</term>
+                    <listitem>
+                        <para>
+                            This option should only be used to test the machine account renewal
+task. The option expect 2 integers seperated by a colon (':'). The first
+integer defines the interval in seconds how often the task is run. The
+second specifies the inital timeout in seconds before the task is run for
+the first time after startup.
+                        </para>
+                        <para>
+                            Default: 86400:750 (24h and 15m)
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>dyndns_update (булеве значення)</term>
+                    <listitem>
+                        <para>
+                            Необов’язковий. За допомогою цього параметра можна наказати SSSD автоматично
+оновити IP-адресу цього клієнта на сервері DNS Active Directory. Захист
+оновлення буде забезпечено за допомогою GSS-TSIG. Як наслідок,
+адміністраторові Active Directory достатньо буде дозволити оновлення безпеки
+для зони DNS. Для оновлення буде використано IP-адресу з’єднання LDAP AD,
+якщо цю адресу не було змінено за допомогою параметра «dyndns_iface».
+                        </para>
+                        <para>
+                            ЗАУВАЖЕННЯ: на застарілих системах (зокрема RHEL 5) для надійної роботи у
+цьому режимі типову область дії Kerberos має бути належним чином визначено у
+/etc/krb5.conf
+                        </para>
+                        <para>
+                            Типове значення: true
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>dyndns_ttl (ціле число)</term>
+                    <listitem>
+                        <para>
+                            TTL, до якого буде застосовано клієнтський запис DNS під час його
+оновлення. Якщо dyndns_update має значення false, цей параметр буде
+проігноровано. Перевизначає TTL на боці сервера, якщо встановлено
+адміністратором.
+                        </para>
+                        <para>
+                            Типове значення: 3600 (секунд)
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>dyndns_iface (рядок)</term>
+                    <listitem>
+                        <para>
+                            Optional. Applicable only when dyndns_update is true. Choose the interface
+or a list of interfaces whose IP addresses should be used for dynamic DNS
+updates. Special value <quote>*</quote> implies that IPs from all interfaces
+should be used.
+                        </para>
+                        <para>
+                            Default: Use the IP addresses of the interface which is used for AD LDAP
+connection
+                        </para>
+                        <para>
+                            Example: dyndns_iface = em1, vnet1, vnet2
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>dyndns_refresh_interval (ціле число)</term>
+                    <listitem>
+                        <para>
+                            How often should the back end perform periodic DNS update in addition to the
+automatic update performed when the back end goes online.  This option is
+optional and applicable only when dyndns_update is true. Note that the
+lowest possible value is 60 seconds in-case if value is provided less than
+60, parameter will assume lowest value only.
+                        </para>
+                        <para>
+                            Типове значення: 86400 (24 години)
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>dyndns_update_ptr (булеве значення)</term>
+                    <listitem>
+                        <para>
+                            Визначає, чи слід явним чином оновлювати запис PTR під час оновлення записів
+DNS клієнта. Застосовується, лише якщо значенням dyndns_update буде true.
+                        </para>
+                        <para>
+                            Типове значення: True
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>dyndns_force_tcp (булеве значення)</term>
+                    <listitem>
+                        <para>
+                            Визначає, чи слід у програмі nsupdate типово використовувати TCP для обміну
+даними з сервером DNS.
+                        </para>
+                        <para>
+                            Типове значення: False (надати змогу nsupdate вибирати протокол)
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term>dyndns_server (string)</term>
+                    <listitem>
+                        <para>
+                            The DNS server to use when performing a DNS update. In most setups, it's
+recommended to leave this option unset.
+                        </para>
+                        <para>
+                            Setting this option makes sense for environments where the DNS server is
+different from the identity server.
+                        </para>
+                        <para>
+                            Please note that this option will be only used in fallback attempt when
+previous attempt using autodetected settings failed.
+                        </para>
+                        <para>
+                            Default: None (let nsupdate choose the server)
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="include/override_homedir.xml" />
+                <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="include/homedir_substring.xml" />
+
+                <varlistentry>
+                    <term>krb5_confd_path (рядок)</term>
+                    <listitem>
+                        <para>
+                            Абсолютний шлях до каталогу, у якому SSSD має зберігати фрагменти
+налаштувань Kerberos.
+                        </para>
+                        <para>
+                            Щоб вимкнути створення фрагментів налаштувань, встановіть для параметра
+значення «none».
+                        </para>
+                        <para>
+                            Типове значення: не встановлено (підкаталог krb5.include.d каталогу pubconf
+SSSD)
+                        </para>
+                    </listitem>
+                </varlistentry>
+            </variablelist>
+        </para>
+    </refsect1>
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="include/ad_modified_defaults.xml" />
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="include/failover.xml" />
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="include/service_discovery.xml" />
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="include/ldap_id_mapping.xml" />
+
+    <refsect1 id='example'>
+        <title>ПРИКЛАД</title>
+        <para>
+            У наведеному нижче прикладі припускаємо, що SSSD налаштовано належним чином,
+а example.com є одним з доменів у розділі
+<replaceable>[sssd]</replaceable>. У прикладі продемонстровано лише
+параметри доступу, специфічні для засобу AD.
+        </para>
+        <para>
+<programlisting>
+[domain/EXAMPLE]
+id_provider = ad
+auth_provider = ad
+access_provider = ad
+chpass_provider = ad
+
+ad_server = dc1.example.com
+ad_hostname = client.example.com
+ad_domain = example.com
+</programlisting>
+        </para>
+    </refsect1>
+
+    <refsect1 id='notes'>
+        <title>ЗАУВАЖЕННЯ</title>
+        <para>
+            Інструмент керування доступом AD перевіряє, чи не завершено строк дії
+облікового запису. Дає той самий результат, що і ось таке налаштовування
+інструмента надання даних LDAP: <programlisting>
+access_provider = ldap
+ldap_access_order = expire
+ldap_account_expire_policy = ad
+</programlisting>
+        </para>
+        <para>
+            Втім, якщо явно не налаштовано засіб надання доступу «ad», типовим засобом
+надання доступу буде «permit». Будь ласка, зауважте, що якщо вами
+налаштовано засіб надання доступу, відмінний від «ad», вам доведеться
+встановлювати усі параметри з’єднання (зокрема адреси LDAP та параметри
+шифрування) вручну.
+        </para>
+        <para>
+            When the autofs provider is set to <quote>ad</quote>, the RFC2307 schema
+attribute mapping (nisMap, nisObject, ...) is used, because these attributes
+are included in the default Active Directory schema.
+        </para>
+        <para>
+        </para>
+    </refsect1>
+
+	<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="include/seealso.xml" />
+
+</refentry>
+</reference>

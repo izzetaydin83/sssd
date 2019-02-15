@@ -1,0 +1,52 @@
+<refsect1 id='failover'>
+    <title>AUSFALLSICHERUNG</title>
+    <para>
+        Die Ausfallsicherungsfunktionalität ermöglicht es, dass Backends automatisch
+auf einen anderen Server wechseln, falls der aktuelle versagt.
+    </para>
+    <refsect2 id='failover_syntax'>
+        <title>AUSFALLSICHERUNGSSYNTAX</title>
+        <para>
+            Die Server werden als durch Kommata getrennte Liste angegeben. Um das Komma
+herum ist eine beliebige Anzahl von Leerzeichen erlaubt. Die Server werden
+in Reihenfolge der Bevorzugung aufgeführt. Die Liste kann eine beliebige
+Anzahl von Servern enthalten.
+        </para>
+        <para>
+            Von jeder Konfigurationsoption mit aktivierter Ausfallsicherung existieren
+zwei Varianten: <emphasis>primary</emphasis> und
+<emphasis>backup</emphasis>. Die Idee dahinter ist, dass Server in der Liste
+»primary« bevorzugt werden und nur nach »backup«-Servern gesucht wird, falls
+kein »primary«-Server erreichbar ist. Falls ein »backup«-Server ausgewählt
+wird, wird eine Dauer von 31 Sekunden bis zur Zeitüberschreitung
+festgelegt. Nach dieser Zeit wird SSSD periodisch versuchen, sich mit einem
+der primären Server zu verbinden. Ist dies erfolgreich, wird es den derzeit
+aktiven (»backup«-)Server ersetzen.
+        </para>
+    </refsect2>
+    <refsect2 id='failover_mechanism'>
+        <title>Der Ausfallsicherungsmechanismus</title>
+        <para>
+            Der Ausfallsicherungsmechanismus unterscheidet zwischen einer Maschine und
+einem Dienst. Das Backend versucht zuerst, den Rechnernamen der angegebenen
+Maschine aufzulösen. Falls dieser Versuch scheitert, wird davon ausgegangen,
+dass die Maschine offline ist und sie auch für keinen anderen Dienst zur
+Verfügung steht. Kann der den Namen erfolgreich aufgelöst werden, versucht
+das Backend, sich mit einem Dienst auf dieser Maschine zu verbinden. Ist das
+nicht möglich, dann wird nur dieser bestimmte Dienst als offline angesehen
+und das Backend wechselt automatisch weiter zum nächsten. Die Maschine wird
+weiterhin als online betrachtet und kann immer noch für andere Dienste
+herangezogen werden.
+        </para>
+        <para>
+            Weitere Verbindungsversuche zu Maschinen oder Diensten, die als offline
+gekennzeichnet sind, werden erst nach einer angegebenen Zeitspanne
+unternommen. Diese ist derzeit hart auf 30 Sekunden codiert.
+        </para>
+        <para>
+            Falls es weitere Maschinen durchzuprobieren gibt, wechselt das Backend als
+Ganzes in den Offline-Modus und versucht dann alle 30 Sekunden, sich erneut
+zu verbinden.
+        </para>
+    </refsect2>
+</refsect1>
